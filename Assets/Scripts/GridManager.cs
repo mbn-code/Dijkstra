@@ -34,11 +34,17 @@ public class GridManager : MonoBehaviour
 
     void PlaceObstacles()
     {
-        int obstacleCount = (width * height) / 10; // 10% of the grid will be obstacles
+        int obstacleCount = (width * height) / 2; // 10% of the grid will be obstacles
         for (int i = 0; i < obstacleCount; i++)
         {
             int x = Random.Range(0, width);
             int y = Random.Range(0, height);
+
+            // Skip the start and target nodes 
+            if(x == 0 && y == 0 || x == width - 1 && y == height - 1)
+            {
+                continue;
+            }
 
             // Mark the node as an obstacle
             graph.nodes[x, y].isWalkable = false;
