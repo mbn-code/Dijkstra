@@ -6,6 +6,10 @@ public class Dijkstra
 {
     public IEnumerator FindShortestPathWithVisualization(Node startNode, Node targetNode, Graph graph, GameObject[,] nodeObjects, float delay)
     {
+        //Highlight target node
+        GameObject finalTargetNode = nodeObjects[(int)targetNode.position.x, (int)targetNode.position.y];
+        finalTargetNode.GetComponent<SpriteRenderer>().color = Color.green;
+
         // Priority Queue to process nodes by distance (closest first)
         PriorityQueue<Node> priorityQueue = new PriorityQueue<Node>();
         startNode.distance = 0;
