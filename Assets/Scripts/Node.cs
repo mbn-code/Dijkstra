@@ -13,4 +13,11 @@ public class Node
     {
         position = pos;
     }
+
+    public void Reset()
+    {
+        distance = Mathf.Infinity;
+        previousNode = null;
+        isVisited = false;
+    }
 }

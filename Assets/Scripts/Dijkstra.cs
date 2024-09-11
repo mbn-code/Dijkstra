@@ -6,7 +6,7 @@ public class Dijkstra
 {
     public IEnumerator FindShortestPathWithVisualization(Node startNode, Node targetNode, Graph graph, GameObject[,] nodeObjects, float delay)
     {
-                //Highlight target node
+        //Highlight target node
         GameObject finalTargetNode = nodeObjects[(int)targetNode.position.x, (int)targetNode.position.y];
         finalTargetNode.GetComponent<SpriteRenderer>().color = Color.green;
 

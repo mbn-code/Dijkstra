@@ -16,12 +16,19 @@ public class NodeHandler : MonoBehaviour
     
     void OnMouseDown()
     {
-        if(transform.position.x == 0 && transform.position.y == 0 || transform.position.x == gridManager.width - 1 && transform.position.y == gridManager.height - 1)
+        if (transform.position.x == 0 && transform.position.y == 0 || transform.position.x == gridManager.width - 1 && transform.position.y == gridManager.height - 1)
         {
             return;
         }
-        
-        GetComponent<SpriteRenderer>().color = Color.black;
-        gridManager.AddObstacle(transform.position.x, transform.position.y);
+
+        if (gridManager.IsObstacle(transform.position.x, transform.position.y))
+        {
+            GetComponent<SpriteRenderer>().color = Color.white;
+            gridManager.RemoveObstacle(transform.position.x, transform.position.y);
+        } else
+        {
+            GetComponent<SpriteRenderer>().color = Color.black;
+            gridManager.AddObstacle(transform.position.x, transform.position.y);
+        }
     }
 }

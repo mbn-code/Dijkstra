@@ -59,6 +59,16 @@ public class GridManager : MonoBehaviour
         graph.nodes[(int)x, (int)y].isWalkable = false;
     }
 
+    public bool IsObstacle(float x, float y)
+    {
+        return !graph.nodes[(int)x, (int)y].isWalkable;
+    }
+
+    public void RemoveObstacle(float x, float y)
+    {
+        graph.nodes[(int)x, (int)y].isWalkable = true;
+    }
+
     IEnumerator RunDijkstraVisualization()
     {
         Dijkstra dijkstra = new Dijkstra();
@@ -86,11 +96,31 @@ public class GridManager : MonoBehaviour
         }
     }
 
+    private bool hasRun = false;
     void Update()
     {
         if (Input.GetKeyDown(KeyCode.Space))
         {
-            StartCoroutine(RunDijkstraVisualization());
+            if(!hasRun)
+            {
+                hasRun = !hasRun;
+                StartCoroutine(RunDijkstraVisualization());
+            } else
+            {
+                hasRun = !hasRun;
+                // Reset the grid
+                for (int x = 0; x < width; x++)
+                {
+                    for (int y = 0; y < height; y++)
+                    {
+                        if (!graph.nodes[x, y].isWalkable)
+                            continue;
+
+                        nodeObjects[x, y].GetComponent<SpriteRenderer>().color = Color.white;
+                        graph.nodes[x, y].Reset();
+                    }
+                }
+            }
         }
     }
 }
