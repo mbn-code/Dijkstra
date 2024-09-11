@@ -22,7 +22,11 @@ public class Graph
     public List<Node> GetNeighbors(Node node)
     {
         List<Node> neighbors = new List<Node>();
-        Vector2[] directions = { Vector2.up, Vector2.down, Vector2.left, Vector2.right };
+        Vector2[] directions = 
+        { 
+            Vector2.up, Vector2.down, Vector2.left, Vector2.right,
+            new Vector2(1, 1), new Vector2(1, -1), new Vector2(-1, 1), new Vector2(-1, -1)
+        };
 
         foreach (var direction in directions)
         {
