@@ -24,12 +24,12 @@ public class GridManager : MonoBehaviour
                 nodeObjects[x, y] = Instantiate(nodePrefab, pos, Quaternion.identity);
             }
         }
-
+        
         // Place obstacles in the grid
-        PlaceObstacles();
+        //PlaceObstacles();
 
         // Start the coroutine to visualize Dijkstra's algorithm
-        StartCoroutine(RunDijkstraVisualization());
+        //StartCoroutine(RunDijkstraVisualization());
     }
 
     void PlaceObstacles()
@@ -52,6 +52,11 @@ public class GridManager : MonoBehaviour
             // Change the color of the node object to black to indicate an obstacle
             nodeObjects[x, y].GetComponent<SpriteRenderer>().color = Color.black;
         }
+    }
+
+    public void AddObstacle(float x, float y)
+    {
+        graph.nodes[(int)x, (int)y].isWalkable = false;
     }
 
     IEnumerator RunDijkstraVisualization()
@@ -78,6 +83,14 @@ public class GridManager : MonoBehaviour
 
             // Move to the previous node in the path
             currentNode = currentNode.previousNode;
+        }
+    }
+
+    void Update()
+    {
+        if (Input.GetKeyDown(KeyCode.Space))
+        {
+            StartCoroutine(RunDijkstraVisualization());
         }
     }
 }
