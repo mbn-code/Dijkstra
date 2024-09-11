@@ -1,15 +1,14 @@
-using UnityEngine;
 using System.Collections;
+using UnityEngine;
 
 public class GridManager : MonoBehaviour
 {
-    public int width = 10;
-    public int height = 10;
-    public GameObject nodePrefab;
-    public float delay = 0.1f; // Time delay between steps in seconds
-
     private Graph graph;
     private GameObject[,] nodeObjects;  // Store instantiated nodes
+    public GameObject nodePrefab;
+    public int width = 100;
+    public int height = 100;
+    public float delay = 0.1f;
 
     void Start()
     {
@@ -26,8 +25,27 @@ public class GridManager : MonoBehaviour
             }
         }
 
+        // Place obstacles in the grid
+        PlaceObstacles();
+
         // Start the coroutine to visualize Dijkstra's algorithm
         StartCoroutine(RunDijkstraVisualization());
+    }
+
+    void PlaceObstacles()
+    {
+        int obstacleCount = (width * height) / 10; // 10% of the grid will be obstacles
+        for (int i = 0; i < obstacleCount; i++)
+        {
+            int x = Random.Range(0, width);
+            int y = Random.Range(0, height);
+
+            // Mark the node as an obstacle
+            graph.nodes[x, y].isWalkable = false;
+
+            // Change the color of the node object to black to indicate an obstacle
+            nodeObjects[x, y].GetComponent<SpriteRenderer>().color = Color.black;
+        }
     }
 
     IEnumerator RunDijkstraVisualization()

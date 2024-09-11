@@ -6,52 +6,64 @@ public class Dijkstra
 {
     public IEnumerator FindShortestPathWithVisualization(Node startNode, Node targetNode, Graph graph, GameObject[,] nodeObjects, float delay)
     {
-        //Highlight target node
+                //Highlight target node
         GameObject finalTargetNode = nodeObjects[(int)targetNode.position.x, (int)targetNode.position.y];
         finalTargetNode.GetComponent<SpriteRenderer>().color = Color.green;
 
-        // Priority Queue to process nodes by distance (closest first)
-        PriorityQueue<Node> priorityQueue = new PriorityQueue<Node>();
-        startNode.distance = 0;
-        priorityQueue.Enqueue(startNode);
-
-        while (priorityQueue.Count > 0)
+        
+        // Flatten the 2D array into a single list
+        List<Node> unvisitedNodes = new List<Node>();
+        for (int x = 0; x < graph.nodes.GetLength(0); x++)
         {
-            Node currentNode = priorityQueue.Dequeue();
-            currentNode.isVisited = true;
-
-            // Visualize the current node being processed (e.g., turn it yellow)
-            int x = (int)currentNode.position.x;
-            int y = (int)currentNode.position.y;
-            nodeObjects[x, y].GetComponent<SpriteRenderer>().color = Color.yellow;
-
-            // Wait for the delay to show the process step-by-step
-            yield return new WaitForSeconds(delay);
-
-            // If we reached the target node, stop the process
-            if (currentNode == targetNode)
-                break;
-
-            foreach (var neighbor in graph.GetNeighbors(currentNode))
+            for (int y = 0; y < graph.nodes.GetLength(1); y++)
             {
-                if (neighbor.isVisited)
+                unvisitedNodes.Add(graph.nodes[x, y]);
+            }
+        }
+
+        startNode.distance = 0;
+
+        while (unvisitedNodes.Count > 0)
+        {
+            // Sort the unvisited nodes by distance
+            unvisitedNodes.Sort((node1, node2) => node1.distance.CompareTo(node2.distance));
+            Node currentNode = unvisitedNodes[0];
+            unvisitedNodes.Remove(currentNode);
+
+            // If the current node is not walkable, skip it
+            if (!currentNode.isWalkable)
+            {
+                continue;
+            }
+
+            // If the current node is the target node, break out of the loop
+            if (currentNode == targetNode)
+            {
+                break;
+            }
+
+            // Update the distances to the neighboring nodes
+            foreach (Node neighbor in graph.GetNeighbors(currentNode))
+            {
+                if (!neighbor.isWalkable)
+                {
                     continue;
+                }
 
                 float tentativeDistance = currentNode.distance + Vector3.Distance(currentNode.position, neighbor.position);
-
                 if (tentativeDistance < neighbor.distance)
                 {
                     neighbor.distance = tentativeDistance;
                     neighbor.previousNode = currentNode;
-
-                    // Visualize the neighbor being added to the queue (e.g., turn it blue)
-                    int nx = (int)neighbor.position.x;
-                    int ny = (int)neighbor.position.y;
-                    nodeObjects[nx, ny].GetComponent<SpriteRenderer>().color = Color.blue;
-
-                    priorityQueue.Enqueue(neighbor);
                 }
             }
+
+            // Visualize the current node as visited
+            int x = (int)currentNode.position.x;
+            int y = (int)currentNode.position.y;
+            nodeObjects[x, y].GetComponent<SpriteRenderer>().color = Color.blue;
+
+            yield return new WaitForSeconds(delay);
         }
     }
 }
