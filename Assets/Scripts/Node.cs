@@ -7,10 +7,11 @@ public class Node
     public Node previousNode = null;  // Used to trace back the path
     public bool isVisited = false;  // To check if the node is visited
     public bool isWalkable = true;  // To check if the node is walkable (not an obstacle)
-
     public float gCost;  // Cost from start node
     public float hCost;  // Heuristic cost to end node
     public float fCost { get { return gCost + hCost; } }  // Total cost
+    public bool isEnd = false; // To check if the node is the start or end node
+    public bool isStart = false; // To check if the node is the start or end node
 
     // Constructor to initialize the node with a position
     public Node(Vector3 pos)

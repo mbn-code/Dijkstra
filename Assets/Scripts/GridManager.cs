@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
 
 public class GridManager : MonoBehaviour
@@ -11,8 +12,23 @@ public class GridManager : MonoBehaviour
     public int height = 100;
     public float delay = 0.1f;
 
+    private int CurrentAlgorithm = 0; // 0 = Dijkstra, 1 = A*
+
+    public TMPro.TextMeshProUGUI AlgorithmText;
+
+
+    private Dictionary<string, Node> StartAndEnd = new Dictionary<string, Node>();
+
+
     void Start()
     {
+        CurrentAlgorithm = PlayerPrefs.GetInt("CurrentAlgorithm", 0);
+
+        if (CurrentAlgorithm == 0)
+            AlgorithmText.text = "Current Algorithm:\nDijkstra";
+        else
+            AlgorithmText.text = "Current Algorithm:\nA*";
+
         graph = new Graph(width, height);
         nodeObjects = new GameObject[width, height];
 
@@ -69,67 +85,128 @@ public class GridManager : MonoBehaviour
     {
         graph.nodes[(int)x, (int)y].isWalkable = true;
     }
+    
+    public bool IsStartOrEnd(float x, float y)
+    {
+        return (graph.nodes[(int)x, (int)y].isEnd || graph.nodes[(int)x, (int)y].isStart);
+    }
+
+    public bool PlaceStartOrEnd(float x, float y)
+    {
+        if (StartAndEnd.Count == 2)
+        {
+            Debug.Log("Start and End nodes are already set");
+            return false;
+        }
+
+        if (StartAndEnd.Count == 0)
+        {
+            SetStartNode(x, y);
+        }
+        else
+        {
+            SetEndNode(x, y);
+        }
+
+        return true;
+    }
+
+    public void RemoveStartOrEnd(float x, float y)
+    {
+        if(StartAndEnd.Count == 0)
+        {
+            Debug.Log("Start amd End nodes are not set");
+        }
+
+        Node node = graph.nodes[(int)x, (int)y];
+
+        if (node.isStart)
+            RemoveStartNode(x, y);
+        else if (node.isEnd)
+            RemoveEndNode(x, y);
+    }
+
+    public void SetStartNode(float x, float y)
+    {
+        graph.nodes[(int)x, (int)y].isStart = true;
+
+        if (StartAndEnd.ContainsKey("Start"))
+            StartAndEnd.Remove("Start");
+
+        StartAndEnd.Add("Start", graph.nodes[(int)x, (int)y]);
+    }
+
+    public void SetEndNode(float x, float y)
+    {
+        graph.nodes[(int)x, (int)y].isEnd = true;
+
+        if (StartAndEnd.ContainsKey("End"))
+            StartAndEnd.Remove("End");
+
+        StartAndEnd.Add("End", graph.nodes[(int)x, (int)y]);
+    }
+
+    public void RemoveEndNode(float x, float y)
+    {
+        graph.nodes[(int)x, (int)y].isEnd = false;
+
+        if (StartAndEnd.ContainsKey("End"))
+            StartAndEnd.Remove("End");
+    }
+
+    public void RemoveStartNode(float x, float y)
+    {
+        graph.nodes[(int)x, (int)y].isStart = false;
+
+        if (StartAndEnd.ContainsKey("Start"))
+            StartAndEnd.Remove("Start");
+    }
+
+    private void ResetPreviousNodes()
+    {
+        foreach (Node node in graph.nodes)
+        {
+            node.Reset();
+        }
+    }
+
+    IEnumerator RunDijkstraVisualization()
+    {
+        ResetPreviousNodes();
+
+        if (StartAndEnd.Count < 2)
+        {
+            Debug.Log("Please set the start and end nodes");
+            yield break;
+        }
+
+        Dijkstra dijkstra = new Dijkstra();
+        yield return StartCoroutine(dijkstra.FindShortestPathWithVisualization(StartAndEnd["Start"], StartAndEnd["End"], graph, nodeObjects, delay));
+
+        // After the algorithm finishes, visualize the final path
+        VisualizePath(StartAndEnd["Start"], StartAndEnd["End"]);
+    }
 
     IEnumerator RunAstarVisualization()
     {
-        Astar astar = new Astar();
-        List<Node> openSet = new List<Node>();
-        HashSet<Node> closedSet = new HashSet<Node>();
-        Node startNode = graph.nodes[0, 0];
-        Node targetNode = graph.nodes[width - 1, height - 1];
-        openSet.Add(startNode);
+        ResetPreviousNodes();
 
-        while (openSet.Count > 0)
+        if (StartAndEnd.Count < 2)
         {
-            Node currentNode = openSet[0];
-            for (int i = 1; i < openSet.Count; i++)
-            {
-                if (openSet[i].fCost < currentNode.fCost || openSet[i].fCost == currentNode.fCost && openSet[i].hCost < currentNode.hCost)
-                {
-                    currentNode = openSet[i];
-                }
-            }
-
-            openSet.Remove(currentNode);
-            closedSet.Add(currentNode);
-
-            // Visualize the current node being processed
-            int cx = (int)currentNode.position.x;
-            int cy = (int)currentNode.position.y;
-            nodeObjects[cx, cy].GetComponent<SpriteRenderer>().color = Color.blue;
-            yield return new WaitForSeconds(delay);
-
-            if (currentNode == targetNode)
-            {
-                VisualizePath(startNode, targetNode);
-                yield break;
-            }
-
-            foreach (Node neighbor in graph.GetNeighbors(currentNode))
-            {
-                if (!neighbor.isWalkable || closedSet.Contains(neighbor))
-                {
-                    continue;
-                }
-
-                float newCostToNeighbor = currentNode.gCost + Vector3.Distance(currentNode.position, neighbor.position);
-                if (newCostToNeighbor < neighbor.gCost || !openSet.Contains(neighbor))
-                {
-                    neighbor.gCost = newCostToNeighbor;
-                    neighbor.hCost = Vector3.Distance(neighbor.position, targetNode.position);
-                    neighbor.previousNode = currentNode;
-
-                    if (!openSet.Contains(neighbor))
-                    {
-                        openSet.Add(neighbor);
-                    }
-                }
-            }
+            Debug.Log("Please set the start and end nodes");
+            yield break;
         }
+
+        Astar astar = new Astar();
+        yield return StartCoroutine(astar.FindPath(StartAndEnd["Start"], StartAndEnd["End"], graph, nodeObjects, delay));
+
+        // After the algorithm finishes, visualize the final path
+        VisualizePath(StartAndEnd["Start"], StartAndEnd["End"]);
     }
 
     void VisualizePath(Node startNode, Node targetNode)
     {
+        nodeObjects[(int)startNode.position.x, (int)startNode.position.y].GetComponent<SpriteRenderer>().color = Color.red;
         List<Node> path = new List<Node>();
         Node currentNode = targetNode;
 
@@ -148,6 +225,22 @@ public class GridManager : MonoBehaviour
         }
     }
 
+    public void SwitchDijkstra()
+    {
+        AlgorithmText.text = "Current Algorithm:\nDijkstra";
+        CurrentAlgorithm = 0;
+        PlayerPrefs.SetInt("CurrentAlgorithm", 0);
+        PlayerPrefs.Save();
+    }
+
+    public void SwitchAstar()
+    {
+        AlgorithmText.text = "Current Algorithm:\nA*";
+        CurrentAlgorithm = 1;
+        PlayerPrefs.SetInt("CurrentAlgorithm", 1);
+        PlayerPrefs.Save();
+    }
+
     private bool hasRun = false;
     void Update()
     {
@@ -156,7 +249,10 @@ public class GridManager : MonoBehaviour
             if (!hasRun)
             {
                 hasRun = !hasRun;
-                StartCoroutine(RunAstarVisualization());
+                if (CurrentAlgorithm == 0)
+                    StartCoroutine(RunDijkstraVisualization());
+                else
+                    StartCoroutine(RunAstarVisualization());
             }
             else
             {
@@ -167,6 +263,9 @@ public class GridManager : MonoBehaviour
                     for (int y = 0; y < height; y++)
                     {
                         if (!graph.nodes[x, y].isWalkable)
+                            continue;
+
+                        if (graph.nodes[x, y].isStart || graph.nodes[x, y].isEnd)
                             continue;
 
                         nodeObjects[x, y].GetComponent<SpriteRenderer>().color = Color.white;

@@ -2,9 +2,9 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class Astar : MonoBehaviour
+public class Astar
 {
-    public List<Node> FindPath(Node startNode, Node targetNode, Graph graph)
+    public IEnumerator FindPath(Node startNode, Node targetNode, Graph graph, GameObject[,] nodeObjects, float delay)
     {
         List<Node> openSet = new List<Node>();
         HashSet<Node> closedSet = new HashSet<Node>();
@@ -24,9 +24,15 @@ public class Astar : MonoBehaviour
             openSet.Remove(currentNode);
             closedSet.Add(currentNode);
 
+            // Visualize the current node being processed
+            int cx = (int)currentNode.position.x;
+            int cy = (int)currentNode.position.y;
+            nodeObjects[cx, cy].GetComponent<SpriteRenderer>().color = Color.blue;
+            yield return new WaitForSeconds(delay);
+
             if (currentNode == targetNode)
             {
-                return RetracePath(startNode, targetNode);
+                break; // Har fundet frem til en rigtige
             }
 
             foreach (Node neighbor in graph.GetNeighbors(currentNode))
@@ -50,21 +56,5 @@ public class Astar : MonoBehaviour
                 }
             }
         }
-
-        return null; // Path not found :(
-    }
-
-    List<Node> RetracePath(Node startNode, Node endNode)
-    {
-        List<Node> path = new List<Node>();
-        Node currentNode = endNode;
-
-        while (currentNode != startNode)
-        {
-            path.Add(currentNode);
-            currentNode = currentNode.previousNode;
-        }
-        path.Reverse();
-        return path;
     }
 }

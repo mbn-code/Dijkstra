@@ -13,22 +13,41 @@ public class NodeHandler : MonoBehaviour
         gridManagerObject = GameObject.Find("GridManager");
         gridManager = gridManagerObject.GetComponent<GridManager>();
     }
-    
-    void OnMouseDown()
+
+    void OnMouseOver()
     {
-        if (transform.position.x == 0 && transform.position.y == 0 || transform.position.x == gridManager.width - 1 && transform.position.y == gridManager.height - 1)
+        if (Input.GetMouseButtonDown(0)) // Blocking Nodes
         {
-            return;
+            if (gridManager.IsStartOrEnd(transform.position.x, transform.position.y))
+                return;
+
+            if (gridManager.IsObstacle(transform.position.x, transform.position.y))
+            {
+                GetComponent<SpriteRenderer>().color = Color.white;
+                gridManager.RemoveObstacle(transform.position.x, transform.position.y);
+            }
+            else
+            {
+                GetComponent<SpriteRenderer>().color = Color.black;
+                gridManager.AddObstacle(transform.position.x, transform.position.y);
+            }
         }
 
-        if (gridManager.IsObstacle(transform.position.x, transform.position.y))
+        if (Input.GetMouseButtonDown(1)) // Start and Target Nodes
         {
-            GetComponent<SpriteRenderer>().color = Color.white;
-            gridManager.RemoveObstacle(transform.position.x, transform.position.y);
-        } else
-        {
-            GetComponent<SpriteRenderer>().color = Color.black;
-            gridManager.AddObstacle(transform.position.x, transform.position.y);
+            if (gridManager.IsObstacle(transform.position.x, transform.position.y))
+                return;
+
+            if (gridManager.IsStartOrEnd(transform.position.x, transform.position.y))
+            {
+                GetComponent<SpriteRenderer>().color = Color.white;
+                gridManager.RemoveStartOrEnd(transform.position.x, transform.position.y);
+            }
+            else
+            {
+                if (gridManager.PlaceStartOrEnd(transform.position.x, transform.position.y))
+                    GetComponent<SpriteRenderer>().color = Color.red;
+            }
         }
     }
 }
