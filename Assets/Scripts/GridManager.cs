@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
 public class GridManager : MonoBehaviour
@@ -24,12 +25,12 @@ public class GridManager : MonoBehaviour
                 nodeObjects[x, y] = Instantiate(nodePrefab, pos, Quaternion.identity);
             }
         }
-        
+
         // Place obstacles in the grid
         //PlaceObstacles();
 
-        // Start the coroutine to visualize Dijkstra's algorithm
-        //StartCoroutine(RunDijkstraVisualization());
+        // Start the coroutine to visualize A* algorithm
+        //StartCoroutine(RunAstarVisualization());
     }
 
     void PlaceObstacles()
@@ -41,7 +42,7 @@ public class GridManager : MonoBehaviour
             int y = Random.Range(0, height);
 
             // Skip the start and target nodes 
-            if(x == 0 && y == 0 || x == width - 1 && y == height - 1)
+            if (x == 0 && y == 0 || x == width - 1 && y == height - 1)
             {
                 continue;
             }
@@ -69,30 +70,81 @@ public class GridManager : MonoBehaviour
         graph.nodes[(int)x, (int)y].isWalkable = true;
     }
 
-    IEnumerator RunDijkstraVisualization()
+    IEnumerator RunAstarVisualization()
     {
-        Dijkstra dijkstra = new Dijkstra();
-        yield return StartCoroutine(dijkstra.FindShortestPathWithVisualization(graph.nodes[0, 0], graph.nodes[width - 1, height - 1], graph, nodeObjects, delay));
+        Astar astar = new Astar();
+        List<Node> openSet = new List<Node>();
+        HashSet<Node> closedSet = new HashSet<Node>();
+        Node startNode = graph.nodes[0, 0];
+        Node targetNode = graph.nodes[width - 1, height - 1];
+        openSet.Add(startNode);
 
-        // After the algorithm finishes, visualize the final path
-        VisualizePath(graph.nodes[width - 1, height - 1]);
+        while (openSet.Count > 0)
+        {
+            Node currentNode = openSet[0];
+            for (int i = 1; i < openSet.Count; i++)
+            {
+                if (openSet[i].fCost < currentNode.fCost || openSet[i].fCost == currentNode.fCost && openSet[i].hCost < currentNode.hCost)
+                {
+                    currentNode = openSet[i];
+                }
+            }
+
+            openSet.Remove(currentNode);
+            closedSet.Add(currentNode);
+
+            // Visualize the current node being processed
+            int cx = (int)currentNode.position.x;
+            int cy = (int)currentNode.position.y;
+            nodeObjects[cx, cy].GetComponent<SpriteRenderer>().color = Color.blue;
+            yield return new WaitForSeconds(delay);
+
+            if (currentNode == targetNode)
+            {
+                VisualizePath(startNode, targetNode);
+                yield break;
+            }
+
+            foreach (Node neighbor in graph.GetNeighbors(currentNode))
+            {
+                if (!neighbor.isWalkable || closedSet.Contains(neighbor))
+                {
+                    continue;
+                }
+
+                float newCostToNeighbor = currentNode.gCost + Vector3.Distance(currentNode.position, neighbor.position);
+                if (newCostToNeighbor < neighbor.gCost || !openSet.Contains(neighbor))
+                {
+                    neighbor.gCost = newCostToNeighbor;
+                    neighbor.hCost = Vector3.Distance(neighbor.position, targetNode.position);
+                    neighbor.previousNode = currentNode;
+
+                    if (!openSet.Contains(neighbor))
+                    {
+                        openSet.Add(neighbor);
+                    }
+                }
+            }
+        }
     }
 
-    void VisualizePath(Node targetNode)
+    void VisualizePath(Node startNode, Node targetNode)
     {
+        List<Node> path = new List<Node>();
         Node currentNode = targetNode;
 
-        // Traverse back from the target node to the start node using the previousNode property
-        while (currentNode != null)
+        while (currentNode != startNode)
         {
-            int x = (int)currentNode.position.x;
-            int y = (int)currentNode.position.y;
-
-            // Change the color of the node object at the current position to red
-            nodeObjects[x, y].GetComponent<SpriteRenderer>().color = Color.red;
-
-            // Move to the previous node in the path
+            path.Add(currentNode);
             currentNode = currentNode.previousNode;
+        }
+        path.Reverse();
+
+        foreach (Node node in path)
+        {
+            int x = (int)node.position.x;
+            int y = (int)node.position.y;
+            nodeObjects[x, y].GetComponent<SpriteRenderer>().color = Color.red;
         }
     }
 
@@ -101,11 +153,12 @@ public class GridManager : MonoBehaviour
     {
         if (Input.GetKeyDown(KeyCode.Space))
         {
-            if(!hasRun)
+            if (!hasRun)
             {
                 hasRun = !hasRun;
-                StartCoroutine(RunDijkstraVisualization());
-            } else
+                StartCoroutine(RunAstarVisualization());
+            }
+            else
             {
                 hasRun = !hasRun;
                 // Reset the grid
