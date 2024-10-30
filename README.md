@@ -10,6 +10,9 @@ This project is a Unity-based application for visualizing pathfinding algorithms
 - **Start and End Nodes**: Set start and end nodes to define the pathfinding area.
 - **Algorithm Switching**: Easily switch between Dijkstra's and A* algorithms.
 
+![image](https://github.com/user-attachments/assets/8445a2df-15b8-4b91-a76b-044ccee59039)
+
+
 ## Getting Started
 
 ### Prerequisites
