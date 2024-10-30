@@ -9,7 +9,6 @@ public class Dijkstra
         //Highlight target node
         GameObject finalTargetNode = nodeObjects[(int)targetNode.position.x, (int)targetNode.position.y];
         finalTargetNode.GetComponent<SpriteRenderer>().color = Color.green;
-
         
         // Flatten the 2D array into a single list
         List<Node> unvisitedNodes = new List<Node>();
