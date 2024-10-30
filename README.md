@@ -21,7 +21,7 @@ This project is a Unity-based application for visualizing pathfinding algorithms
 
 1. Clone the repository:
     ```sh
-    git clone https://github.com/yourusername/Unity-Path-finding-demo.git
+    git clone https://github.com/mbn-code/Unity-Path-finding-demo.git
     ```
 2. Open the project in Unity.
 
