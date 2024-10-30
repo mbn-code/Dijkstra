@@ -30,12 +30,14 @@ This project is a Unity-based application for visualizing pathfinding algorithms
 1. Open the `Scenes` folder and load the main scene.
 2. Use the UI to place obstacles, set start and end nodes, and switch between algorithms.
 3. Press the play button to start the visualization.
+4. Now use `Left Click` to mark a Node as an obstacle. Use `Right Click` to place a `start` and `end` node (2 must be placed, both start and end). Use `Space` to run the algorithm chosen on the Grid.
 
 ## Project Structure
 
 - **Assets/Scripts**: Contains all the scripts for the project.
   - [`GridManager`](Assets/Scripts/GridManager.cs): Manages the grid and handles user interactions.
   - [`Dijkstra`](Assets/Scripts/Dijkstra.cs): Implements Dijkstra's algorithm.
+  - [`Astar`](Assets/Scripts/Astar.cs): Implements A\* algorithm.
 - **Assets/Scenes**: Contains the Unity scenes.
 - **Assets/Prefab**: Contains prefabs used in the project.
 
