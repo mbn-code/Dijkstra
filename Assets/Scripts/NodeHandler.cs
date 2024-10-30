@@ -46,7 +46,7 @@ public class NodeHandler : MonoBehaviour
             else
             {
                 if (gridManager.PlaceStartOrEnd(transform.position.x, transform.position.y))
-                    GetComponent<SpriteRenderer>().color = Color.red;
+                    GetComponent<SpriteRenderer>().color = new Color(0.62f, 0.12f, 0.94f);
             }
         }
     }

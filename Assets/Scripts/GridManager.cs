@@ -1,27 +1,40 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class GridManager : MonoBehaviour
 {
     private Graph graph;
     private GameObject[,] nodeObjects;  // Store instantiated nodes
     public GameObject nodePrefab;
-    public int width = 100;
-    public int height = 100;
-    public float delay = 0.1f;
+    public int width = 10;
+    public int height = 10;
+    public float delay = 0f;
 
     private int CurrentAlgorithm = 0; // 0 = Dijkstra, 1 = A*
 
-    public TMPro.TextMeshProUGUI AlgorithmText;
+    public TextMeshProUGUI AlgorithmText;
+    public TextMeshProUGUI TimeText;
+
+    public Slider GridSizeSlider;
+
+    internal event System.Action OnGridSizeChanged;
 
 
     private Dictionary<string, Node> StartAndEnd = new Dictionary<string, Node>();
 
 
+    private bool Initialized = false;
     void Start()
     {
+        GridSizeSlider.value = PlayerPrefs.GetInt("GridsSize", 10);
+
+        width = (int)GridSizeSlider.value;
+        height = (int)GridSizeSlider.value;
+
         CurrentAlgorithm = PlayerPrefs.GetInt("CurrentAlgorithm", 0);
 
         if (CurrentAlgorithm == 0)
@@ -42,11 +55,9 @@ public class GridManager : MonoBehaviour
             }
         }
 
-        // Place obstacles in the grid
-        //PlaceObstacles();
+        OnGridSizeChanged?.Invoke(); // Fix cam pos
 
-        // Start the coroutine to visualize A* algorithm
-        //StartCoroutine(RunAstarVisualization());
+        Initialized = true;
     }
 
     void PlaceObstacles()
@@ -95,7 +106,7 @@ public class GridManager : MonoBehaviour
     {
         if (StartAndEnd.Count == 2)
         {
-            Debug.Log("Start and End nodes are already set");
+            UnityEngine.Debug.Log("Start and End nodes are already set");
             return false;
         }
 
@@ -115,7 +126,7 @@ public class GridManager : MonoBehaviour
     {
         if(StartAndEnd.Count == 0)
         {
-            Debug.Log("Start amd End nodes are not set");
+            UnityEngine.Debug.Log("Start amd End nodes are not set");
         }
 
         Node node = graph.nodes[(int)x, (int)y];
@@ -170,43 +181,43 @@ public class GridManager : MonoBehaviour
         }
     }
 
-    IEnumerator RunDijkstraVisualization()
+    IEnumerator RunPathFinding()
     {
         ResetPreviousNodes();
 
         if (StartAndEnd.Count < 2)
         {
-            Debug.Log("Please set the start and end nodes");
+            UnityEngine.Debug.Log("Please set the start and end nodes");
             yield break;
         }
 
-        Dijkstra dijkstra = new Dijkstra();
-        yield return StartCoroutine(dijkstra.FindShortestPathWithVisualization(StartAndEnd["Start"], StartAndEnd["End"], graph, nodeObjects, delay));
+        Stopwatch stopwatch = new Stopwatch();
 
-        // After the algorithm finishes, visualize the final path
-        VisualizePath(StartAndEnd["Start"], StartAndEnd["End"]);
-    }
-
-    IEnumerator RunAstarVisualization()
-    {
-        ResetPreviousNodes();
-
-        if (StartAndEnd.Count < 2)
+        if (CurrentAlgorithm == 0)
         {
-            Debug.Log("Please set the start and end nodes");
-            yield break;
+            Dijkstra dijkstra = new Dijkstra();
+            stopwatch.Start();
+            yield return StartCoroutine(dijkstra.FindShortestPathWithVisualization(StartAndEnd["Start"], StartAndEnd["End"], graph, nodeObjects, delay));
+            stopwatch.Stop();
+        }
+        else
+        {
+            Astar astar = new Astar();
+            stopwatch.Start();
+            yield return StartCoroutine(astar.FindPath(StartAndEnd["Start"], StartAndEnd["End"], graph, nodeObjects, delay));
+            stopwatch.Stop();
         }
 
-        Astar astar = new Astar();
-        yield return StartCoroutine(astar.FindPath(StartAndEnd["Start"], StartAndEnd["End"], graph, nodeObjects, delay));
+        TimeText.text = stopwatch.ElapsedMilliseconds + "ms";
 
-        // After the algorithm finishes, visualize the final path
         VisualizePath(StartAndEnd["Start"], StartAndEnd["End"]);
+
+        isRunning = false;
     }
 
     void VisualizePath(Node startNode, Node targetNode)
     {
-        nodeObjects[(int)startNode.position.x, (int)startNode.position.y].GetComponent<SpriteRenderer>().color = Color.red;
+        nodeObjects[(int)startNode.position.x, (int)startNode.position.y].GetComponent<SpriteRenderer>().color = new Color(0.62f, 0.12f, 0.94f);
         List<Node> path = new List<Node>();
         Node currentNode = targetNode;
 
@@ -221,7 +232,7 @@ public class GridManager : MonoBehaviour
         {
             int x = (int)node.position.x;
             int y = (int)node.position.y;
-            nodeObjects[x, y].GetComponent<SpriteRenderer>().color = Color.red;
+            nodeObjects[x, y].GetComponent<SpriteRenderer>().color = new Color(0.62f, 0.12f, 0.94f);
         }
     }
 
@@ -241,18 +252,54 @@ public class GridManager : MonoBehaviour
         PlayerPrefs.Save();
     }
 
+    public void GridSizeChanged()
+    {
+        if(!Initialized)
+            return;
+
+        width = (int)GridSizeSlider.value;
+        height = (int)GridSizeSlider.value;
+
+        // Clean up the grid
+        foreach (GameObject gameObject in nodeObjects)
+        {
+            Destroy(gameObject);
+        }
+
+        // Make new stuff for algorithms
+        graph = new Graph(width, height);
+        nodeObjects = new GameObject[width, height];
+
+        // Instantiate grid visual elements (e.g., node prefabs)
+        for (int x = 0; x < width; x++)
+        {
+            for (int y = 0; y < height; y++)
+            {
+                Vector3 pos = new Vector3(x, y, 0);
+                nodeObjects[x, y] = Instantiate(nodePrefab, pos, Quaternion.identity);
+            }
+        }
+
+        StartAndEnd.Clear();
+
+        // Update CameraManager
+        OnGridSizeChanged?.Invoke();
+
+        PlayerPrefs.SetInt("GridsSize", (int)GridSizeSlider.value);
+        PlayerPrefs.Save();
+    }
+
     private bool hasRun = false;
+    private bool isRunning = false;
     void Update()
     {
-        if (Input.GetKeyDown(KeyCode.Space))
+        if (Input.GetKeyDown(KeyCode.Space) && !isRunning)
         {
             if (!hasRun)
             {
                 hasRun = !hasRun;
-                if (CurrentAlgorithm == 0)
-                    StartCoroutine(RunDijkstraVisualization());
-                else
-                    StartCoroutine(RunAstarVisualization());
+                isRunning = true;
+                StartCoroutine(RunPathFinding());
             }
             else
             {
