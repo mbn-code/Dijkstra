@@ -5,7 +5,7 @@ This project is a Unity-based application for visualizing pathfinding algorithms
 ## Features
 
 - **Dijkstra's Algorithm**: Visualize the shortest path using Dijkstra's algorithm.
-- **A* Algorithm**: Visualize the shortest path using the A* algorithm.
+- **A\* Algorithm**: Visualize the shortest path using the A* algorithm.
 - **Obstacle Placement**: Add and remove obstacles to see how they affect the pathfinding.
 - **Start and End Nodes**: Set start and end nodes to define the pathfinding area.
 - **Algorithm Switching**: Easily switch between Dijkstra's and A* algorithms.
